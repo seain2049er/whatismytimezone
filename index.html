@@ -21,19 +21,23 @@
 <script>
   const map = L.map('map').setView([20, 0], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  let marker;
 
   document.getElementById('getLoc').onclick = () => {
-    document.getElementById('info').innerHTML = 'Getting location…';
+    const info = document.getElementById('info');
+    info.innerHTML = 'Requesting location…';
     navigator.geolocation.getCurrentPosition(pos => {
       const lat = pos.coords.latitude, lng = pos.coords.longitude;
       map.setView([lat, lng], 9);
-      L.marker([lat, lng]).addTo(map).bindPopup('You').openPopup();
+      if (marker) marker.remove();
+      marker = L.marker([lat, lng]).addTo(map).bindPopup('You').openPopup();
       const tz = tzlookup(lat, lng);
-      const time = new Date().toLocaleString('en', {timeZone:tz});
-      document.getElementById('info').innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
-    }, () => {
-      document.getElementById('info').innerHTML = 'Location denied. Try again.';
-    });
+      const time = new Date().toLocaleString('en', {timeZone: tz, hour12: false});
+      info.innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
+    }, err => {
+      info.innerHTML = `Failed (${err.code}). <button id="retry">Retry</button>`;
+      document.getElementById('retry').onclick = () => location.reload();
+    }, {timeout: 10000, maximumAge: 600000, enableHighAccuracy: true});
   };
 </script>
 </body></html>
