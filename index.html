@@ -1,47 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>What Is My Timezone?</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<html><head>
+  <meta charset="utf-8">
+  <title>My Timezone</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    body { margin:0; font-family: sans-serif; }
-    #map { height: 100vh; }
-    #info { position: absolute; top: 10px; left: 10px; background: white; padding: 15px; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    body{margin:0;font:16px sans-serif}
+    #map{height:100vh}
+    #info{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.2);text-align:center}
+    button{margin-top:10px;padding:8px 16px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
   </style>
-</head>
-<body>
-  <div id="info">Click "Allow" for location</div>
-  <div id="map"></div>
+</head><body>
+<div id="info">
+  <strong>Show my timezone & time</strong><br>
+  <button id="getLoc">Allow Location</button>
+</div>
+<div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/timezonecomplete@2.6.0/dist/timezonecomplete.min.js"></script>
-  <script>
-    const map = L.map('map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@photostructure/tz-lookup@8.0.3/dist/tz-lookup-umd.min.js"></script>
+<script>
+  const map = L.map('map').setView([20, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    if (!navigator.geolocation) {
-      document.getElementById('info').textContent = 'Geolocation not supported';
-      return;
-    }
-
+  document.getElementById('getLoc').onclick = () => {
+    document.getElementById('info').innerHTML = 'Getting location…';
     navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude, longitude } = pos.coords;
-      map.setView([latitude, longitude], 10);
-      L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
-
-      const tz = timezonecomplete.at({ latitude, longitude }).zone.name;
-      const now = new Date();
-      const localTime = timezonecomplete.atUtc(now).toZone(tz).toString();
-      
-      document.getElementById('info').innerHTML = `
-        <strong>🗺️ Your Location</strong><br>
-        <strong>🌐 Timezone:</strong> ${tz}<br>
-        <strong>🕐 Local Time:</strong> ${localTime}
-      `;
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      map.setView([lat, lng], 9);
+      L.marker([lat, lng]).addTo(map).bindPopup('You').openPopup();
+      const tz = tzlookup(lat, lng);
+      const time = new Date().toLocaleString('en', {timeZone:tz});
+      document.getElementById('info').innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
     }, () => {
-      document.getElementById('info').textContent = 'Location access denied';
+      document.getElementById('info').innerHTML = 'Location denied. Try again.';
     });
-  </script>
-</body>
-</html>
+  };
+</script>
+</body></html>
