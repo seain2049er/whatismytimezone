@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html><head>
   <meta charset="utf-8">
@@ -6,8 +7,8 @@
   <style>
     body{margin:0;font:16px sans-serif}
     #map{height:100vh}
-    #info{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.2);text-align:center}
-    button{margin-top:10px;padding:8px 16px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
+    #info{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.2);text-align:center;max-width:300px}
+    button{margin:5px;padding:8px 16px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
   </style>
 </head><body>
 <div id="info">
@@ -17,7 +18,7 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@photostructure/tz-lookup@8.0.3/dist/tz-lookup-umd.min.js"></script>
+<script src="https://unpkg.com/tz-lookup@6.1.25/tz-lookup.min.js"></script>
 <script>
   const map = L.map('map').setView([20, 0], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -31,13 +32,21 @@
       map.setView([lat, lng], 9);
       if (marker) marker.remove();
       marker = L.marker([lat, lng]).addTo(map).bindPopup('You').openPopup();
-      const tz = tzlookup(lat, lng);
+      
+      let tz = tzlookup(lat, lng);
+      if (!tz) {
+        const offset = Math.round(lng / 15);
+        const sign = offset >= 0 ? '-' : '+';
+        const abs_offset = Math.abs(offset);
+        tz = `Etc/GMT${sign}${abs_offset}`;
+      }
       const time = new Date().toLocaleString('en', {timeZone: tz, hour12: false});
       info.innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
     }, err => {
-      info.innerHTML = `Failed (${err.code}). <button id="retry">Retry</button>`;
+      info.innerHTML = `Failed (${err.code}). <button id="retry" style="background:#28a745">Retry</button>`;
       document.getElementById('retry').onclick = () => location.reload();
     }, {timeout: 10000, maximumAge: 600000, enableHighAccuracy: true});
   };
 </script>
 </body></html>
+```
