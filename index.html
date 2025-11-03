@@ -31,16 +31,20 @@
       map.setView([lat, lng], 9);
       if (marker) marker.remove();
       marker = L.marker([lat, lng]).addTo(map).bindPopup('You').openPopup();
-      
-      let tz = tzlookup(lat, lng);
-      if (!tz) {
-        const offset = Math.round(lng / 15);
-        const sign = offset >= 0 ? '-' : '+';
-        const abs_offset = Math.abs(offset);
-        tz = `Etc/GMT${sign}${abs_offset}`;
+      info.innerHTML = 'Loading timezone…';
+      try {
+        let tz = tzlookup(lat, lng);
+        if (!tz) {
+          const offset = Math.round(lng / 15);
+          const sign = offset >= 0 ? '-' : '+';
+          const abs_offset = Math.abs(offset);
+          tz = `Etc/GMT${sign}${abs_offset}`;
+        }
+        const time = new Date().toLocaleString('en', {timeZone: tz, hour12: false});
+        info.innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
+      } catch (e) {
+        info.innerHTML = `Timezone error: ${e.message}`;
       }
-      const time = new Date().toLocaleString('en', {timeZone: tz, hour12: false});
-      info.innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
     }, err => {
       info.innerHTML = `Failed (${err.code}). <button id="retry" style="background:#28a745">Retry</button>`;
       document.getElementById('retry').onclick = () => location.reload();
