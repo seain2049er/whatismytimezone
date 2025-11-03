@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>What Is My Timezone?</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin:0; font-family: sans-serif; }
+    #map { height: 100vh; }
+    #info { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; z-index: 1000; }
+  </style>
+</head>
+<body>
+  <div id="info">Loading...</div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    if (!navigator.geolocation) {
+      document.getElementById('info').textContent = 'Geolocation not supported';
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude, longitude } = pos.coords;
+      map.setView([latitude, longitude], 10);
+      L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
+
+      const res = await fetch(`https://api.timezonedb.com/v2.1/get-time-zone?key=YOUR_KEY&format=json&by=position&lat=${latitude}&lng=${longitude}`);
+      const data = await res.json();
+      if (data.status === 'OK') {
+        const tz = data.zoneName;
+        const time = new Date().toLocaleString('en-US', { timeZone: tz });
+        document.getElementById('info').innerHTML = `<b>Timezone:</b> ${tz}<br><b>Time:</b> ${time}`;
+      } else {
+        document.getElementById('info').textContent = 'Timezone lookup failed';
+      }
+    }, () => {
+      document.getElementById('info').textContent = 'Location access denied';
+    });
+  </script>
+</body>
+</html>
